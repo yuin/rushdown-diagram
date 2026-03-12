@@ -1,0 +1,28 @@
+[package]
+name = "rushdown-diagram"
+version = "0.9.0"
+edition = "2021"
+rust-version = "1.87"
+description = "Diagram visualization extension for rushdown markdown parser"
+documentation = "https://docs.rs/rushdown-diagram"
+homepage = "https://github.com/yuin/rushdown-diagram"
+repository = "https://github.com/yuin/rushdown-diagram"
+readme = "README.md"
+keywords = ["markdown", "commonmark"]
+license = "MIT"
+categories = ["text-processing"]
+resolver = "2"
+
+[profile.release]
+opt-level = 3
+debug = false
+lto = true
+codegen-units = 1
+panic = 'abort'
+
+[features]
+default = ["std"]
+std = ["rushdown/default"]
+
+[dependencies]
+rushdown = { version = "0.9.6", default-features = false}
