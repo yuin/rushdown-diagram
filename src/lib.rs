@@ -139,8 +139,8 @@ impl AstTransformer for DiagramAstTransformer {
                     _ => continue,
                 };
                 let diagram = arena.new_node(Diagram::new(diagram_type));
-                let lines = as_type_data_mut!(arena, code_ref, Block).take_lines();
-                as_type_data_mut!(arena, diagram, Block).append_lines(&lines);
+                let lines = as_type_data_mut!(arena, code_ref, Block).take_source();
+                as_type_data_mut!(arena, diagram, Block).append_source_lines(&lines);
                 let hbl = as_type_data!(arena, code_ref, Block).has_blank_previous_line();
                 as_type_data_mut!(arena, diagram, Block).set_blank_previous_line(hbl);
                 arena[code_ref]
@@ -238,7 +238,7 @@ impl<W: TextWrite> RenderNode<W> for DiagramHtmlRenderer<W> {
             if entering {
                 self.writer.write_safe_str(w, "<pre class=\"mermaid\">\n")?;
                 let block = as_type_data!(arena, node_ref, Block);
-                for line in block.lines().iter() {
+                for line in block.source().iter() {
                     self.writer.raw_write(w, &line.str(source))?;
                 }
             } else {
