@@ -119,7 +119,7 @@ impl AstTransformer for DiagramAstTransformer {
          -> Result<WalkStatus> {
             if entering && matches_kind!(arena[node_ref], CodeBlock) {
                 let code_block = as_kind_data!(arena[node_ref], CodeBlock);
-                if let Some(lang) = code_block.language(reader.source()) {
+                if let Some(lang) = code_block.language_str(reader.source()) {
                     if lang == "mermaid" {
                         if target_codes.is_none() {
                             target_codes = Some(Vec::new());
@@ -134,7 +134,7 @@ impl AstTransformer for DiagramAstTransformer {
         if let Some(target_codes) = target_codes {
             for code_ref in target_codes {
                 let code_block = as_kind_data!(arena[code_ref], CodeBlock);
-                let diagram_type = match code_block.language(reader.source()) {
+                let diagram_type = match code_block.language_str(reader.source()) {
                     Some("mermaid") => DiagramType::Mermaid,
                     _ => continue,
                 };
