@@ -5,6 +5,8 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use rushdown::as_extension_data;
+use rushdown::as_extension_data_mut;
 use rushdown::as_kind_data;
 use rushdown::as_type_data;
 use rushdown::as_type_data_mut;
@@ -37,6 +39,7 @@ use rushdown::{
 #[derive(Debug)]
 pub struct Diagram {
     diagram_type: DiagramType,
+    value: text::Lines,
 }
 
 /// An enum representing the type of a diagram.
@@ -49,13 +52,27 @@ pub enum DiagramType {
 impl Diagram {
     /// Returns a new [`Diagram`] with the given diagram type.
     pub fn new(diagram_type: DiagramType) -> Self {
-        Self { diagram_type }
+        Self {
+            diagram_type,
+            value: text::Lines::default(),
+        }
     }
 
     /// Returns the type of the diagram.
     #[inline(always)]
     pub fn diagram_type(&self) -> DiagramType {
         self.diagram_type
+    }
+
+    /// Returns the value of the diagram as a slice of lines.
+    #[inline(always)]
+    pub fn value(&self) -> &text::Lines {
+        &self.value
+    }
+
+    /// Sets the value of the diagram.
+    pub fn set_value(&mut self, value: impl Into<text::Lines>) {
+        self.value = value.into();
     }
 }
 
@@ -67,20 +84,23 @@ impl NodeKind for Diagram {
     fn kind_name(&self) -> &'static str {
         "Diagram"
     }
-
-    fn is_atomic(&self) -> bool {
-        true
-    }
 }
 
 impl PrettyPrint for Diagram {
-    fn pretty_print(&self, w: &mut dyn Write, _source: &str, level: usize) -> fmt::Result {
+    fn pretty_print(&self, w: &mut dyn Write, source: &str, level: usize) -> fmt::Result {
         writeln!(
             w,
             "{}DiagramType: {:?}",
             pp_indent(level),
             self.diagram_type()
-        )
+        )?;
+        write!(w, "{}Value: ", pp_indent(level))?;
+        writeln!(w, "[ ")?;
+        for line in self.value.iter(source) {
+            write!(w, "{}{}", pp_indent(level + 1), line)?;
+        }
+        writeln!(w)?;
+        writeln!(w, "{}]", pp_indent(level))
     }
 }
 
@@ -134,13 +154,17 @@ impl AstTransformer for DiagramAstTransformer {
         if let Some(target_codes) = target_codes {
             for code_ref in target_codes {
                 let code_block = as_kind_data!(arena[code_ref], CodeBlock);
+                let lines = code_block.value().clone();
+                let pos = arena[code_ref].pos();
                 let diagram_type = match code_block.language_str(reader.source()) {
                     Some("mermaid") => DiagramType::Mermaid,
                     _ => continue,
                 };
                 let diagram = arena.new_node(Diagram::new(diagram_type));
-                let lines = as_type_data_mut!(arena, code_ref, Block).take_source();
-                as_type_data_mut!(arena, diagram, Block).append_source_lines(&lines);
+                if let Some(pos) = pos {
+                    arena[diagram].set_pos(pos);
+                }
+                as_extension_data_mut!(arena, diagram, Diagram).set_value(lines);
                 let hbl = as_type_data!(arena, code_ref, Block).has_blank_previous_line();
                 as_type_data_mut!(arena, diagram, Block).set_blank_previous_line(hbl);
                 arena[code_ref]
@@ -237,9 +261,9 @@ impl<W: TextWrite> RenderNode<W> for DiagramHtmlRenderer<W> {
         ) {
             if entering {
                 self.writer.write_safe_str(w, "<pre class=\"mermaid\">\n")?;
-                let block = as_type_data!(arena, node_ref, Block);
-                for line in block.source().iter() {
-                    self.writer.raw_write(w, &line.str(source))?;
+                let kd = as_extension_data!(arena, node_ref, Diagram);
+                for line in kd.value().iter(source) {
+                    self.writer.raw_write(w, &line)?;
                 }
             } else {
                 self.writer.write_safe_str(w, "</pre>\n")?;
