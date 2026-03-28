@@ -11,8 +11,14 @@ rushdown-diagram = "x.y.z"
 ```
 
 ## Syntax
-Currently, rushdown-diagram supports only mermaid diagrams and client-side rendering. 
-You can use the following syntax to embed a mermaid diagram:
+Currently, rushdown-diagram supports diagrams in the following formats:
+
+- MermaidJS
+  - client-side rendering
+- PlantUML
+  - server-side rendering (requires a `plantuml` command)
+
+You can use the following syntax to embed diagrams:
 
 `````markdown
 ```mermaid
@@ -21,6 +27,13 @@ graph LR
     B-->C[fa:fa-ban forbidden]
     B-->D(fa:fa-spinner);
 ```
+
+```plantuml
+@startuml
+Hello <|-- World
+@enduml
+```
+
 `````
 
 ## Usage
@@ -34,12 +47,12 @@ use rushdown::{
     renderer::html::{self, RendererExtension},
     Result,
 };
-use rushdown_diagram::{diagram_parser_extension, diagram_html_renderer_extension, DiagramHtmlRendererOptions};
+use rushdown_diagram::{diagram_parser_extension, diagram_html_renderer_extension, DiagramParserOptions, DiagramHtmlRendererOptions};
 
 let markdown_to_html = new_markdown_to_html(
     parser::Options::default(),
     html::Options::default(),
-    diagram_parser_extension(),
+    diagram_parser_extension(DiagramParserOptions::default()),
     diagram_html_renderer_extension(DiagramHtmlRendererOptions::default()),
 );
 let mut output = String::new();

@@ -23,6 +23,9 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Install PlantUML
+        run: sudo apt update && sudo apt install -y plantuml
+
       - name: Run Tests
         run: cargo test -- --nocapture --test-threads=1
         env:

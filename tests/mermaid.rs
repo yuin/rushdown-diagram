@@ -3,8 +3,8 @@ use rushdown::{
     renderer::html,
     test::{MarkdownTestCase, MarkdownTestCaseOptions},
 };
-use rushdown_diagram::diagram_parser_extension;
 use rushdown_diagram::{diagram_html_renderer_extension, DiagramHtmlRendererOptions};
+use rushdown_diagram::{diagram_parser_extension, DiagramParserOptions};
 
 #[test]
 fn test_mermaid() {
@@ -23,7 +23,7 @@ graph LR
             xhtml: false,
             ..html::Options::default()
         },
-        diagram_parser_extension(),
+        diagram_parser_extension(DiagramParserOptions::default()),
         diagram_html_renderer_extension(DiagramHtmlRendererOptions::default()),
     );
     MarkdownTestCase::new(

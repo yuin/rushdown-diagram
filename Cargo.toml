@@ -1,6 +1,6 @@
 [package]
 name = "rushdown-diagram"
-version = "0.9.6"
+version = "0.10.0"
 edition = "2021"
 rust-version = "1.87"
 description = "Diagram visualization extension for rushdown markdown parser"
@@ -26,3 +26,4 @@ std = ["rushdown/default"]
 
 [dependencies]
 rushdown = { version = "0.16.0", default-features = false}
+which = "8.0.2"
