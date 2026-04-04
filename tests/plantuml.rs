@@ -29,7 +29,7 @@ Hello <|-- World
     let mut out = String::new();
     markdown_to_html(&mut out, source).unwrap();
     assert!(
-        out.contains("<?plantuml"),
+        out.contains("<svg"),
         "Output should contain the plantuml diagram"
     );
 }
