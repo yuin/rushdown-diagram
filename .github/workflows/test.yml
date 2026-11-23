@@ -23,8 +23,26 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
       - name: Install PlantUML
         run: sudo apt update && sudo apt install -y plantuml
+
+      - name: Cache Puppeteer browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-${{ runner.os }}-mermaid-cli-11.14.0
+
+      - name: Install Mermaid CLI
+        run: |
+          npm install -g @mermaid-js/mermaid-cli@11.14.0
+          printf 'graph LR\n    A --> B\n' > /tmp/smoke.mmd
+          mmdc -p tests/puppeteer-config.json -i /tmp/smoke.mmd -o /tmp/smoke.svg
+          test -s /tmp/smoke.svg
 
       - name: Run Tests
         run: cargo test -- --nocapture --test-threads=1

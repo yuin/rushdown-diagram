@@ -1,6 +1,20 @@
 use rushdown::{new_markdown_to_html, parser, renderer::html};
-use rushdown_diagram::{diagram_html_renderer_extension, DiagramHtmlRendererOptions};
-use rushdown_diagram::{diagram_parser_extension, DiagramParserOptions};
+use rushdown_diagram::{
+    diagram_html_renderer_extension, diagram_parser_extension, DiagramHtmlRendererOptions,
+    DiagramParserOptions, PlantUmlHtmlRenderingOptions,
+};
+
+fn render_with(source: &str, renderer_options: DiagramHtmlRendererOptions) -> String {
+    let markdown_to_html = new_markdown_to_html(
+        parser::Options::default(),
+        html::Options::default(),
+        diagram_parser_extension(DiagramParserOptions::default()),
+        diagram_html_renderer_extension(renderer_options),
+    );
+    let mut out = String::new();
+    markdown_to_html(&mut out, source).unwrap();
+    out
+}
 
 #[test]
 fn test_plantuml() {
@@ -9,27 +23,24 @@ fn test_plantuml() {
         return;
     }
 
-    let source = r#"
-```plantuml
-@startuml
-Hello <|-- World
-@enduml
-```
-"#;
-    let markdown_to_html = new_markdown_to_html(
-        parser::Options::default(),
-        html::Options {
-            allows_unsafe: true,
-            xhtml: false,
-            ..html::Options::default()
+    let out = render_with(
+        "```plantuml\n@startuml\nHello <|-- World\n@enduml\n```\n",
+        DiagramHtmlRendererOptions::default(),
+    );
+    assert!(out.contains("<svg"), "{out}");
+}
+
+#[test]
+fn test_plantuml_command_not_found() {
+    let out = render_with(
+        "```plantuml\n@startuml\nA -> B\n@enduml\n```\n",
+        DiagramHtmlRendererOptions {
+            plantuml: PlantUmlHtmlRenderingOptions {
+                command: Some(String::from("rushdown-diagram-nonexistent-command")),
+                ..Default::default()
+            },
+            ..Default::default()
         },
-        diagram_parser_extension(DiagramParserOptions::default()),
-        diagram_html_renderer_extension(DiagramHtmlRendererOptions::default()),
     );
-    let mut out = String::new();
-    markdown_to_html(&mut out, source).unwrap();
-    assert!(
-        out.contains("<svg"),
-        "Output should contain the plantuml diagram"
-    );
+    assert!(out.contains("<pre class=\"plantuml-error\">"), "{out}");
 }
